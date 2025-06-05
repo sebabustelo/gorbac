@@ -1,19 +1,19 @@
-# SPBAC  [Services Packets Base Access Control]
+# GORBAC - RABC con golang
 
-**Sistema de control de acceso basado en paquetes de servicios**
+**SPBAC** es un sistema de control de acceso basado en roles y paquetes de servicios, pensado para gestionar usuarios, aplicaciones, servicios y la asignación de permisos de manera flexible y escalable.
 
-## Caracteristicas
+## Características principales
 
- * Gestionar Usuarios (ABM)
- * Gestionar Aplicaciones (ABM)
- * Gestionar Servicios (ABM)
- * Gestionar Paquetes (son un conjunto de servicios que pueden ser asignado a uno o muchos usuarios) (ABM)
+- **Gestión de Usuarios:** Alta, baja y modificación de usuarios.
+- **Gestión de Roles y Permisos:** Asignación de roles a usuarios y permisos a roles.
+- **Gestión de Productos:** Alta, baja y modificación de productos.
+- **Autenticación tradicional y con Google:** Permite login local y mediante Google OAuth.
+- **Control de acceso a endpoints:** Los permisos se gestionan a nivel de endpoint, según el rol del usuario.
+- **API RESTful:** Backend desarrollado en Go, expone endpoints para todas las operaciones principales.
 
 ## Configuración de la base de datos
 
-La aplicación lee la configuración de la base de datos del archivo `config.json` ubicado en la carpeta config, modificar estos
-parametros segun corresponda.
-En la carpeta db se encuentra el script sql con las tablas y las relaciones de la base de datos.
+La aplicación utiliza un archivo `config.json` ubicado en la carpeta `config` para la configuración de la base de datos. Modifica estos parámetros según tu entorno:
 
 ```json
 {
@@ -25,3 +25,27 @@ En la carpeta db se encuentra el script sql con las tablas y las relaciones de l
   "db_password": "root"
 }
 ```
+
+En la carpeta `db` encontrarás el script SQL con la estructura de tablas y relaciones necesarias para el sistema.
+
+## Instalación y ejecución
+
+1. Clona el repositorio.
+2. Configura la base de datos y el archivo `config.json`.
+3. Ejecuta las migraciones o el script SQL de la carpeta `db`.
+4. Compila y ejecuta el backend en Go.
+5. (Opcional) Configura y ejecuta el frontend en React para la interfaz de usuario.
+
+## Autenticación con Google
+
+Para habilitar el login con Google:
+- Configura el proveedor en Firebase y Google Cloud Console.
+- Usa el Client ID correspondiente en el backend para validar los tokens.
+
+## Licencia
+
+MIT
+
+---
+
+**Desarrollado por Sebastián Bustelo**
