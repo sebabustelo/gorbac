@@ -1,0 +1,10 @@
+{
+    "db_driver": "mysql",
+    "db_host": "database-mariadb-test",
+    "db_port": "3306",
+    "db_name": "gorbac_test",
+    "db_user": "test",
+    "db_password": "root123",
+     "_comment_options_env": "[local][desa][test][prod]",
+    "env":"local"
+} 
