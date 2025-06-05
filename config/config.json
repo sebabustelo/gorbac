@@ -1,10 +1,10 @@
-{
+{	
     "db_driver": "mysql",
-    "db_host": "database-mariadb",
-    "db_port": "3306",
-    "db_name": "gorbac",
-    "db_user": "test",
-    "db_password": "root123",
+    "db_host": "${{RAILWAY_PRIVATE_DOMAIN}}",
+    "db_port": 3306,
+    "db_name": "${{MYSQL_DATABASE}}",
+    "db_user": "${{MYSQLUSER}}",
+    "db_password": "${{MYSQL_ROOT_PASSWORD}}",
     "_comment_options_env": "[local][desa][test][prod]",
-    "env":"local"
+    "env": "prod"
 }
