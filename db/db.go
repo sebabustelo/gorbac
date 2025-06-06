@@ -56,7 +56,7 @@ func connectDB(prefix string) *gorm.DB {
 	if prefix == "TEST_" {
 		configPath = "./config/config_test.json"
 	} else {
-		configPath = "./config/config.json"
+		configPath = "${{RAILWAY_ENVIRONMENT}}/config/config.json"
 	}
 
 	c, err := config.New(configPath)
