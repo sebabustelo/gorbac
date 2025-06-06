@@ -75,16 +75,24 @@ func connectDB(prefix string) *gorm.DB {
 	// dbName, _ := c.Get("db_name")
 	// dbPort, _ := c.Get("db_port")
 
-	dbUser := "root"
-	dbPass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
-	dbHost := "mysql.railway.internal"
-	dbPort := 3306
-	dbName := "railway"
+	// dbUser := "root"
+	// dbPass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
+	// dbHost := "mysql.railway.internal"
+	// dbPort := 3306
+	// dbName := "railway"
 
-	dbURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	// dbURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+
+	user := "root"
+	pass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
+	host := "mysql.railway.internal"
+	port := 3306
+	dbname := "railway"
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, pass, host, port, dbname)
 
 	var connection *gorm.DB
-	connection, err = gorm.Open("mysql", dbURI)
+	connection, err = gorm.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
