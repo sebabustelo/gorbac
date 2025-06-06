@@ -5,6 +5,9 @@ import (
 	"api-rbac/controllers/products"
 	"api-rbac/controllers/roles"
 	"api-rbac/controllers/users"
+	"database/sql"
+	"fmt"
+	"log"
 
 	"net/http"
 
@@ -64,6 +67,23 @@ func main() {
 		r.Post("/google-login", authentication.GoogleLogin)
 
 	})
+
+	user := "root"
+	pass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
+	host := "mysql.railway.internal"
+	port := 3306
+	dbname := "railway"
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, pass, host, port, dbname)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal("Error al abrir conexión:", err)
+	}
+	if err := db.Ping(); err != nil {
+		log.Fatal("Error al conectar a la base de datos:", err)
+	}
+	fmt.Println("Conexión exitosa")
 
 	http.ListenAndServe(":8229", r)
 
