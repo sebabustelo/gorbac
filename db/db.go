@@ -63,7 +63,7 @@ func connectDB() *gorm.DB {
 	dbPort, _ := c.Get("db_port")
 
 	var dbURI string
-	if os.Getenv("GO_ENV") == "production" {
+	if os.Getenv("GO_ENV") == "prod" {
 		// Railway y otros proveedores que NO usan tcp()
 		dbURI = fmt.Sprintf("%s:%s@%s:%s/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 	} else {

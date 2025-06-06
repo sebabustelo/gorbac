@@ -2,7 +2,7 @@ FROM golang:alpine
 ENV GO111MODULE=on
 #ENV http_proxy="http://www-proxy.mrec.ar:8080"
 #ENV https_proxy="http://www-proxy.mrec.ar:8080"
-ENV GO_ENV=produccion
+ENV GO_ENV=prod
 
 # Instala dependencias de compilación para SQLite
 RUN apk add --no-cache gcc musl-dev
