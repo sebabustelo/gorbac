@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"sync"
@@ -92,23 +91,6 @@ func connectDB(prefix string) *gorm.DB {
 	fmt.Println("dbName:", dbName)
 	fmt.Println("dbPass:", dbPass)
 	fmt.Println("dbURI:", dbURI)
-
-	user := "root"
-	pass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
-	host := "mysql.railway.internal"
-	port := 3306
-	dbname := "railway"
-
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, pass, host, port, dbname)
-
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		log.Fatal("Error al abrir conexión:", err)
-	}
-	if err := db.Ping(); err != nil {
-		log.Fatal("Error al conectar a la base de datos:", err)
-	}
-	fmt.Println("✅ Conexión exitosa")
 
 	return db
 }
