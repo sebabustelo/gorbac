@@ -43,7 +43,7 @@ func TestProduct_Create(t *testing.T) {
 	SetupTestDB()
 
 	// Obtener la categoría de prueba existente
-	db := db.TestInstance()
+	db := db.Instance()
 	var category Category
 	if err := db.Where("name = ?", "Test Category").First(&category).Error; err != nil {
 		t.Fatalf("No se pudo obtener la categoría de prueba: %v", err)
@@ -75,7 +75,7 @@ func TestProduct_Update(t *testing.T) {
 		Name:        "Updated Category",
 		Description: "Categoría de prueba",
 	}
-	db := db.TestInstance()
+	db := db.Instance()
 	if err := db.Create(category).Error; err != nil {
 		t.Fatalf("No se pudo crear la categoría de prueba: %v", err)
 	}

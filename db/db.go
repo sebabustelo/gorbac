@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"api-rbac/config"
@@ -32,31 +33,17 @@ func Instance() *gorm.DB {
 		return db
 	}
 
-	return connectDB("")
-}
-
-// TestInstance returns the test database instance
-func TestInstance() *gorm.DB {
-	if dbTest != nil {
-		return dbTest
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	if dbTest != nil {
-		return dbTest
-	}
-
-	return connectDB("TEST_")
+	return connectDB()
 }
 
 // connectDB establishes a connection to the database
-func connectDB(prefix string) *gorm.DB {
-	if prefix == "TEST_" {
-		configPath = "/opt/go/config/config_test.json"
+func connectDB() *gorm.DB {
+	if os.Getenv("GO_ENV") == "test" {
+		configPath = "./config/config_test.json"
+	} else if os.Getenv("GO_ENV") == "local" {
+		configPath = "./config/config_local.json"
 	} else {
-		configPath = "/opt/go/config/config.json"
+		configPath = "./config/config.json"
 	}
 
 	c, err := config.New(configPath)
@@ -69,11 +56,11 @@ func connectDB(prefix string) *gorm.DB {
 		log.Fatal("No se puede validar los campos db_driver|db_host|db_port|db_name|db_user|db_password del archivo config.json")
 	}
 
-	// dbHost, _ := c.Get("db_host")
-	// dbUser, _ := c.Get("db_user")
-	// dbPass, _ := c.Get("db_password")
-	// dbName, _ := c.Get("db_name")
-	// dbPort, _ := c.Get("db_port")
+	dbHost, _ := c.Get("db_host")
+	dbUser, _ := c.Get("db_user")
+	dbPass, _ := c.Get("db_password")
+	dbName, _ := c.Get("db_name")
+	dbPort, _ := c.Get("db_port")
 
 	// dbUser := "root"
 	// dbPass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
@@ -81,18 +68,10 @@ func connectDB(prefix string) *gorm.DB {
 	// dbPort := 3306
 	// dbName := "railway"
 
-	// dbURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
-
-	user := "root"
-	pass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
-	host := "mysql.railway.internal"
-	port := 3306
-	dbname := "railway"
-
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, pass, host, port, dbname)
+	dbURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 
 	var connection *gorm.DB
-	connection, err = gorm.Open("mysql", dsn)
+	connection, err = gorm.Open("mysql", dbURI)
 	if err != nil {
 		log.Fatal(err)
 	}

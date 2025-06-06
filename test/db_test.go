@@ -13,7 +13,7 @@ func TestDatabaseConnections(t *testing.T) {
 	}
 
 	// Probar conexión a base de datos de prueba
-	testDB := db.TestInstance()
+	testDB := db.Instance()
 	if testDB == nil {
 		t.Error("No se pudo conectar a la base de datos de prueba")
 	}

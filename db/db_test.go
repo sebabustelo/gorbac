@@ -22,7 +22,7 @@ func TestMainDBConnection(t *testing.T) {
 
 func TestTestDBConnection(t *testing.T) {
 	// Probar conexión a base de datos de prueba
-	db := TestInstance()
+	db := Instance()
 	if db == nil {
 		t.Error("No se pudo conectar a la base de datos de prueba")
 	}

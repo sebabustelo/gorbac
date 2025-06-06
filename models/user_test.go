@@ -226,7 +226,7 @@ func TestUser_CheckPassword(t *testing.T) {
 	}
 
 	// Recargar el usuario para asegurar que tenemos la contraseña hasheada
-	db := db.TestInstance()
+	db := db.Instance()
 	var reloadedUser User
 	err = db.First(&reloadedUser, created.ID).Error
 	if err != nil {

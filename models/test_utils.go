@@ -6,7 +6,7 @@ import (
 
 // SetupTestDB prepares the test database with initial data
 func SetupTestDB() {
-	db := db.TestInstance()
+	db := db.Instance()
 
 	// Verificar que estamos usando la base de datos correcta
 	var dbName string
