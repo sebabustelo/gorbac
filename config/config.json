@@ -2,11 +2,9 @@
 
 {
     "db_driver": "mysql",
-    "db_host": "gorbac-production.up.railway.app",
+    "db_host": "mysql.railway.internal",
     "db_port": 3306,
     "db_name": "railway",
     "db_user": "root",
-    "db_password": "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs",
-    "_comment_options_env": "[local][desa][test][prod]",
-    "env": "prod"
+    "db_password": "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
 }
