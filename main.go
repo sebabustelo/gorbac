@@ -82,7 +82,7 @@ func main() {
 	if err := db.Ping(); err != nil {
 		log.Fatal("Error al conectar a la base de datos:", err)
 	}
-	log.Printf("URI de conexión: %s", dbURI)
+	log.Printf("URI de conexión: %s", dsn)
 	fmt.Println(" Conexión exitosa")
 
 	http.ListenAndServe(":8229", r)
