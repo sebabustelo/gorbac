@@ -69,11 +69,17 @@ func connectDB(prefix string) *gorm.DB {
 		log.Fatal("No se puede validar los campos db_driver|db_host|db_port|db_name|db_user|db_password del archivo config.json")
 	}
 
-	dbHost, _ := c.Get("db_host")
-	dbUser, _ := c.Get("db_user")
-	dbPass, _ := c.Get("db_password")
-	dbName, _ := c.Get("db_name")
-	dbPort, _ := c.Get("db_port")
+	// dbHost, _ := c.Get("db_host")
+	// dbUser, _ := c.Get("db_user")
+	// dbPass, _ := c.Get("db_password")
+	// dbName, _ := c.Get("db_name")
+	// dbPort, _ := c.Get("db_port")
+
+	dbUser := "root"
+	dbPass := "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
+	dbHost := "mysql.railway.internal"
+	dbPort := 3306
+	dbName := "railway"
 
 	dbURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 
@@ -84,13 +90,6 @@ func connectDB(prefix string) *gorm.DB {
 	}
 
 	db = connection
-
-	fmt.Println("dbUser:", dbUser)
-	fmt.Println("dbHost:", dbHost)
-	fmt.Println("dbPort:", dbPort)
-	fmt.Println("dbName:", dbName)
-	fmt.Println("dbPass:", dbPass)
-	fmt.Println("dbURI:", dbURI)
 
 	return db
 }
