@@ -56,6 +56,14 @@ func connectDB() *gorm.DB {
 		log.Fatal("No se puede validar los campos db_driver|db_host|db_port|db_name|db_user|db_password del archivo config.json")
 	}
 
+	// 	  "db_driver": "mysql",
+	//     "db_host": "mysql.railway.internal",
+	//     "db_port": 3306,
+	//     "db_name": "railway",
+	//     "db_user": "root",
+	//     "db_password": "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs"
+	// }
+
 	dbHost, _ := c.Get("db_host")
 	dbUser, _ := c.Get("db_user")
 	dbPass, _ := c.Get("db_password")
@@ -73,6 +81,7 @@ func connectDB() *gorm.DB {
 	var connection *gorm.DB
 	connection, err = gorm.Open("mysql", dbURI)
 	if err != nil {
+		log.Printf("URI de conexión: %s", dbURI)
 		log.Fatal(err)
 	}
 
