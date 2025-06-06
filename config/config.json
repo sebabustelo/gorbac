@@ -1,11 +1,11 @@
 
 {
     "db_driver": "mysql",
-    "db_host": "mysql.railway.internal",
-    "db_port": 3306,
-    "db_name": "railway",
-    "db_user": "root",
-    "db_password": "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs",
-    "_comment_options_env": "[local][desa][test][prod]",
-    "env": "prod"
+    "db_host": "${{MySQL.MYSQLHOST}}",
+    "db_port": "${{MySQL.MYSQL_PORT}}",
+    "db_name": "${{MySQL.MYSQL_DATABASE}}",
+    "db_user": "${{MySQL.MYSQLUSER}}",
+    "db_password": "${{MySQL.MYSQL_ROOT_PASSWORD}}",
+    "_comment_options_env": "[local][desa][test][prod]"
+    
 }
