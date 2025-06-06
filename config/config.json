@@ -2,7 +2,7 @@
 {
     "db_driver": "mysql",
     "db_host": "${{MySQL.MYSQLHOST}}",
-    "db_port": "${{MySQL.MYSQLPORT}}",
+    "db_port": 3306,
     "db_name": "${{MySQL.MYSQL_DATABASE}}",
     "db_user": "${{MySQL.MYSQLUSER}}",
     "db_password": "${{MySQL.MYSQL_ROOT_PASSWORD}}",
