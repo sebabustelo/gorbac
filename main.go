@@ -5,6 +5,10 @@ import (
 	"api-rbac/controllers/products"
 	"api-rbac/controllers/roles"
 	"api-rbac/controllers/users"
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
 
 	"net/http"
 
@@ -64,6 +68,25 @@ func main() {
 		r.Post("/google-login", authentication.GoogleLogin)
 
 	})
+
+	dbUser := os.Getenv("MYSQL_USER")
+	dbPass := os.Getenv("MYSQL_PASSWORD")
+	dbHost := os.Getenv("MYSQLHOST")      // Railway suele usar "mysql.railway.internal"
+	dbPort := os.Getenv("MYSQL_PORT")     // Generalmente "3306"
+	dbName := os.Getenv("MYSQL_DATABASE") // normalmente "railway"
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal("Error al abrir la conexión:", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatal("Error al conectar a la base:", err)
+	}
+
+	fmt.Println("✅ Conexión exitosa a MySQL en Railway")
 
 	http.ListenAndServe(":8229", r)
 
