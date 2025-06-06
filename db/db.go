@@ -54,9 +54,9 @@ func TestInstance() *gorm.DB {
 // connectDB establishes a connection to the database
 func connectDB(prefix string) *gorm.DB {
 	if prefix == "TEST_" {
-		configPath = "/opt/go/config/config_test.json"
+		configPath = "./config/config_test.json"
 	} else {
-		configPath = "/opt/go/config/config.json"
+		configPath = "./config/config.json"
 	}
 
 	c, err := config.New(configPath)
