@@ -86,7 +86,7 @@ func main() {
 		log.Fatal("Error al conectar a la base:", err)
 	}
 
-	fmt.Println("✅ Conexión exitosa a MySQL en Railway")
+	fmt.Println(" Conexión exitosa a MySQL en Railway")
 
 	http.ListenAndServe(":8229", r)
 
