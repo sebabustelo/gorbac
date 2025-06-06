@@ -56,23 +56,27 @@ func connectDB() *gorm.DB {
 		log.Fatal("No se puede validar los campos db_driver|db_host|db_port|db_name|db_user|db_password del archivo config.json")
 	}
 
-	dbDriver, _ := c.Get("db_driver")
 	dbHost, _ := c.Get("db_host")
 	dbUser, _ := c.Get("db_user")
 	dbPass, _ := c.Get("db_password")
 	dbName, _ := c.Get("db_name")
 	dbPort, _ := c.Get("db_port")
 
-	dbURI := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbDriver, dbHost, dbPort, dbName)
+	var dbURI string
+	if os.Getenv("GO_ENV") == "production" {
+		// Railway y otros proveedores que NO usan tcp()
+		dbURI = fmt.Sprintf("%s:%s@%s:%s/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	} else {
+		// Local y Docker usan tcp()
+		dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	}
 
-	var connection *gorm.DB
-	connection, err = gorm.Open("mysql", dbURI)
+	connection, err := gorm.Open("mysql", dbURI)
 	if err != nil {
 		log.Printf("URI de conexión: %s", dbURI)
 		log.Fatal(err)
 	}
 
 	db = connection
-
 	return db
 }
