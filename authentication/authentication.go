@@ -138,7 +138,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	// 3. Busca o crea el usuario en tu base de datos
 	var user models.User
 	db := db.Instance()
-	err = db.Where("email = ?", email).First(&user).Error
+	err = db.Where("email = ?", email).First(&user).Preload("Roles").Error
 	if err != nil {
 		// Si no existe, créalo
 		user = models.User{
@@ -148,11 +148,12 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 			ProviderID: sub,
 			Active:     true,
 		}
-		// Asigna el rol por defecto (ajusta el nombre según tu modelo)
-		var role models.Role
-		if err := db.Where("name = ?", "user").First(&role).Error; err == nil {
-			db.Model(&user).Association("Roles").Append(&role)
+		// Asigna el rol por defecto (rol ID 2 que de user)
+		var defaultRole models.Role
+		if err := db.First(&defaultRole, 2).Error; err == nil {
+			user.Roles = []models.Role{defaultRole}
 		}
+		fmt.Println("ususario a crear ", user)
 		db.Create(&user)
 	}
 

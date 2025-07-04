@@ -65,12 +65,12 @@ func connectDB() *gorm.DB {
 
 	// if os.Getenv("GO_ENV") == "prod" {
 	// 	// Railway y otros proveedores que NO usan tcp()
-	dbURI = fmt.Sprintf("%s:%s@%s:%s/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	// 	dbURI = fmt.Sprintf("%s:%s@%s:%s/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 	// } else {
 	// 	// Local y Docker usan tcp()
 	// 	dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 	// }
-	//dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 	connection, err := gorm.Open("mysql", dbURI)
 	if err != nil {
 		log.Printf("URI de conexión: %s", dbURI)
