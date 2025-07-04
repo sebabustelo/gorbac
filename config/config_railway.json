@@ -1,9 +1,9 @@
 {
     "db_driver": "mysql",
-    "db_host": "${DATABASE_HOST}",
-    "db_port": "${DATABASE_PORT}",
-    "db_name": "${DATABASE_NAME}",
-    "db_user": "${DATABASE_USER}",
-    "db_password": "${DATABASE_PASSWORD}",
+    "db_host": "mysql.railway.internal",
+    "db_port": "3306",
+    "db_name": "railway",
+    "db_user": "root",
+    "db_password": "wqwRdAcPeBlwQXWALkGPMIAzxXLclyAs",
     "env": "production"
-} 
+}
