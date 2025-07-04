@@ -64,6 +64,12 @@ func main() {
 		r.Get("/products", products.Index)
 		r.Post("/google-login", authentication.GoogleLogin)
 
+		// Health check endpoint
+		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"ok"}`))
+		})
+
 	})
 
 	// Use Railway's PORT if available, otherwise use default 8229

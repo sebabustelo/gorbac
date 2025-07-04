@@ -59,7 +59,7 @@ EXPOSE 8229
 
 # Health check para Railway
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8229}/roles || exit 1
+    CMD curl -f http://localhost:${PORT:-8229}/health || exit 1
 
 # Comando de ejecución con mejor manejo de errores
 CMD ["./start.sh"]
