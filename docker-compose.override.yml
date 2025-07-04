@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+  api-rbac:
+    environment:
+      - GO_ENV=local
+      - DEBUG=true
+    volumes:
+      - ./logs:/app/logs
+    command: ["./start.sh"]
+    depends_on:
+      - database-mariadb
+    restart: unless-stopped
+
+  database-mariadb:
+    environment:
+      MYSQL_ROOT_PASSWORD: esmeralda1212
+      MYSQL_DATABASE: gorbac
+      MYSQL_USER: test
+      MYSQL_PASSWORD: root123
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10 

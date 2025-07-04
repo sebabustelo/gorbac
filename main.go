@@ -5,8 +5,9 @@ import (
 	"api-rbac/controllers/products"
 	"api-rbac/controllers/roles"
 	"api-rbac/controllers/users"
-
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -65,6 +66,13 @@ func main() {
 
 	})
 
-	http.ListenAndServe(":8229", r)
+	// Use Railway's PORT if available, otherwise use default 8229
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8229"
+	}
+
+	fmt.Printf("Starting server on port %s\n", port)
+	http.ListenAndServe(":"+port, r)
 
 }

@@ -31,9 +31,11 @@ RUN go build \
 # Fase de ejecución minimalista
 FROM alpine:3.19
 
-# Instalar runtime dependencies para SQLite
+# Instalar runtime dependencies para SQLite y otras utilidades
 RUN apk add --no-cache \   
-    ca-certificates
+    ca-certificates \
+    curl \
+    bash
 
 WORKDIR /app
 
@@ -42,19 +44,25 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/config /app/config
 COPY --from=builder /app/private.rsa .
 COPY --from=builder /app/public.rsa.pub .
+COPY --from=builder /app/start.sh .
 
 # Configuración de seguridad
 RUN addgroup -S appgroup && \
     adduser -S appuser -G appgroup && \
-    chown -R appuser:appgroup /app
+    chown -R appuser:appgroup /app && \
+    chmod +x /app/start.sh
 
 USER appuser
 
-# Puerto de la aplicación
+# Puerto de la aplicación (Railway usará la variable PORT)
 EXPOSE 8229
 
-# Comando de ejecución
-CMD ["./main"]
+# Health check para Railway
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8229}/roles || exit 1
+
+# Comando de ejecución con mejor manejo de errores
+CMD ["./start.sh"]
 
 
 

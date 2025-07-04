@@ -41,6 +41,8 @@ func connectDB() *gorm.DB {
 		configPath = "./config/config_test.json"
 	} else if os.Getenv("GO_ENV") == "local" {
 		configPath = "./config/config_local.json"
+	} else if os.Getenv("GO_ENV") == "railway" || os.Getenv("RAILWAY_ENVIRONMENT") != "" {
+		configPath = "./config/config_railway.json"
 	} else {
 		configPath = "./config/config.json"
 	}
@@ -63,14 +65,19 @@ func connectDB() *gorm.DB {
 
 	var dbURI string
 
-	// if os.Getenv("GO_ENV") == "prod" {
-	// 	// Railway y otros proveedores que NO usan tcp()
-	// 	dbURI = fmt.Sprintf("%s:%s@%s:%s/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
-	// } else {
-	// 	// Local y Docker usan tcp()
-	// 	dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
-	// }
-	dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	// Railway uses tcp() connection
+	if os.Getenv("RAILWAY_ENVIRONMENT") != "" || os.Getenv("GO_ENV") == "railway" {
+		dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	} else if os.Getenv("GO_ENV") == "prod" {
+		// Railway y otros proveedores que NO usan tcp()
+		dbURI = fmt.Sprintf("%s:%s@%s:%s/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	} else {
+		// Local y Docker usan tcp()
+		dbURI = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	}
+
+	log.Printf("Connecting to database: %s:%s/%s", dbHost, dbPort, dbName)
+
 	connection, err := gorm.Open("mysql", dbURI)
 	if err != nil {
 		log.Printf("URI de conexión: %s", dbURI)
