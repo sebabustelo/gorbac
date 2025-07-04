@@ -19,6 +19,7 @@ DATABASE_PASSWORD=tu_password_aqui
 ```
 GO_ENV=railway
 PORT=8229
+ALLOWED_ORIGINS=https://juvapets.netlify.app,https://tu-otro-dominio.com
 ```
 
 ### 2. Configuración en Railway Dashboard
@@ -42,7 +43,28 @@ Si usas Railway MySQL:
 
 3. Conecta tu servicio de aplicación con el servicio MySQL
 
-### 4. Deployment
+### 4. Configuración de CORS
+
+Para permitir requests desde tu frontend (Netlify, Vercel, etc.):
+
+1. **Configura ALLOWED_ORIGINS** en Railway:
+   ```
+   ALLOWED_ORIGINS=https://juvapets.netlify.app,https://tu-otro-dominio.com
+   ```
+
+2. **Orígenes permitidos por defecto**:
+   - `https://juvapets.netlify.app`
+   - `http://localhost:3000`
+   - `http://localhost:5173`
+   - `http://localhost:8080`
+   - `http://localhost:8229`
+
+3. **Para agregar más dominios**, sepáralos por comas:
+   ```
+   ALLOWED_ORIGINS=https://app1.com,https://app2.com,https://app3.com
+   ```
+
+### 5. Deployment
 
 #### Opción 1: GitHub Integration
 1. Conecta tu repositorio de GitHub
@@ -55,7 +77,7 @@ Si usas Railway MySQL:
 2. Sube la imagen a Railway
 3. Configura las variables de entorno
 
-### 5. Troubleshooting
+### 6. Troubleshooting
 
 #### Error: "The executable `docker` could not be found"
 
@@ -72,6 +94,24 @@ Este error en Railway generalmente indica:
 3. **Problema de permisos**
    - Los archivos deben tener permisos correctos
 
+#### Error: "CORS policy: Response to preflight request doesn't pass access control check"
+
+Este error indica problemas de CORS:
+
+1. **Verifica ALLOWED_ORIGINS**:
+   - Asegúrate de que tu dominio esté en la variable `ALLOWED_ORIGINS`
+   - Formato: `https://tu-dominio.com,https://otro-dominio.com`
+
+2. **Verifica el protocolo**:
+   - Usa `https://` para dominios en producción
+   - Usa `http://` solo para localhost
+
+3. **Verifica que no haya espacios**:
+   - `ALLOWED_ORIGINS=https://juvapets.netlify.app` ✅
+   - `ALLOWED_ORIGINS= https://juvapets.netlify.app ` ❌
+
+4. **Reinicia el servicio** después de cambiar variables de entorno
+
 #### Verificar Logs
 
 ```bash
@@ -85,13 +125,13 @@ Este error en Railway generalmente indica:
 La aplicación incluye un health check en `/roles`. Railway verificará:
 - `GET /roles` debe responder con 200 OK
 
-### 6. Configuración de Dominio
+### 7. Configuración de Dominio
 
 1. Ve a tu servicio en Railway
 2. En la pestaña "Settings"
 3. Configura tu dominio personalizado
 
-### 7. Monitoreo
+### 8. Monitoreo
 
 Railway proporciona:
 - Logs en tiempo real
@@ -99,14 +139,14 @@ Railway proporciona:
 - Health checks automáticos
 - Alertas de fallos
 
-### 8. Escalado
+### 9. Escalado
 
 Para escalar tu aplicación:
 1. Ve a tu servicio
 2. Ajusta el número de réplicas
 3. Railway manejará el balanceo de carga automáticamente
 
-### 9. Backup y Recuperación
+### 10. Backup y Recuperación
 
 Railway maneja automáticamente:
 - Backups de base de datos

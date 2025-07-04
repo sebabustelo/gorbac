@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -20,12 +21,39 @@ func main() {
 	//ExampleLDAPClientAuthenticate()
 	r := chi.NewRouter()
 
+	// Get allowed origins from environment or use defaults
+	allowedOrigins := []string{
+		"https://juvapets.netlify.app",
+		"http://localhost:3000",
+		"http://localhost:5173",
+		"http://localhost:8080",
+		"http://localhost:8229",
+	}
+
+	// Add custom origins from environment variable
+	if customOrigins := os.Getenv("ALLOWED_ORIGINS"); customOrigins != "" {
+		// Split by comma and add to allowed origins
+		for _, origin := range strings.Split(customOrigins, ",") {
+			origin = strings.TrimSpace(origin)
+			if origin != "" {
+				allowedOrigins = append(allowedOrigins, origin)
+			}
+		}
+	}
+
 	cors := cors.New(cors.Options{
-
-		AllowedOrigins: []string{"*"},
+		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Accept-Encoding", "Authorization", "Content-Type", "X-CSRF-Token"},
-
+		AllowedHeaders: []string{
+			"Accept",
+			"Accept-Encoding",
+			"Authorization",
+			"Content-Type",
+			"X-CSRF-Token",
+			"Origin",
+			"X-Requested-With",
+		},
+		ExposedHeaders:   []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	})
