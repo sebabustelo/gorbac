@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"api-rbac/db"
 	responses "api-rbac/helpers"
 	"api-rbac/models"
 
@@ -18,13 +19,39 @@ var (
 	publicKey *rsa.PublicKey
 )
 
+// Lista manual de rutas del router (privadas y públicas)
+var allRoutes = []string{
+	"/users/add",
+	"/users/edit",
+	"/users/delete/{id}",
+	"/users/{id}",
+	"/users/index",
+	"/roles",
+	"/roles/add",
+	"/roles/{id}",
+	"/products/add",
+	"/products/{id}",
+	"/products/{id}",
+	"/apis",
+	"/apis/add",
+	"/apis/{id}",
+	"/roles/{id}/apis",
+	"/login",
+	"/roles/permissions/{id}/apis",
+	"/refresh",
+	"/products",
+	"/google-login",
+	"/health",
+	"/auth/check",
+}
+
 // Index retorna un listado de todas las APIs
 func Index(w http.ResponseWriter, r *http.Request) {
 	api := models.Api{}
 	apis, err := api.FindAll()
 
 	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, errors.New("Error al obtener las APIs"))
+		responses.ERROR(w, http.StatusBadRequest, errors.New("error al obtener las APIs"))
 		return
 	}
 
@@ -41,9 +68,13 @@ func Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if api.Tipo == "" {
+		api.Tipo = "GET"
+	}
+
 	// Validar campos requeridos
 	if api.Endpoint == "" {
-		responses.ERROR(w, http.StatusBadRequest, errors.New("El endpoint es requerido"))
+		responses.ERROR(w, http.StatusBadRequest, errors.New("el endpoint es requerido"))
 		return
 	}
 
@@ -79,6 +110,10 @@ func Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if apiUpdate.Tipo == "" {
+		apiUpdate.Tipo = "GET"
+	}
+
 	// Obtener la API existente
 	api := models.Api{}
 	existingApi, err := api.GetByID(int(id))
@@ -92,6 +127,7 @@ func Edit(w http.ResponseWriter, r *http.Request) {
 	existingApi.Description = apiUpdate.Description
 	existingApi.Hidden = apiUpdate.Hidden
 	existingApi.Public = apiUpdate.Public
+	existingApi.Tipo = apiUpdate.Tipo
 
 	// Guardar los cambios
 	updatedApi, err := existingApi.Update()
@@ -156,4 +192,56 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responses.JSON(w, http.StatusOK, result)
+}
+
+// GET /apis/sync: compara rutas del router con la tabla apis
+func SyncApis(w http.ResponseWriter, r *http.Request) {
+	db := db.Instance()
+	var apis []models.Api
+	db.Find(&apis)
+
+	dbEndpoints := make(map[string]bool)
+	for _, api := range apis {
+		dbEndpoints[api.Endpoint] = true
+	}
+
+	missing := []string{}
+	existing := []string{}
+	for _, route := range allRoutes {
+		if dbEndpoints[route] {
+			existing = append(existing, route)
+		} else {
+			missing = append(missing, route)
+		}
+	}
+
+	responses.JSON(w, http.StatusOK, map[string]interface{}{
+		"missing":  missing,
+		"existing": existing,
+	})
+}
+
+// POST /apis/sync: agrega endpoints faltantes a la tabla apis
+func AddMissingApis(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Endpoints []string `json:"endpoints"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	db := db.Instance()
+	added := []string{}
+	for _, ep := range payload.Endpoints {
+		var count int64
+		db.Model(&models.Api{}).Where("endpoint = ?", ep).Count(&count)
+		if count == 0 {
+			api := models.Api{Endpoint: ep, Description: ""}
+			db.Create(&api)
+			added = append(added, ep)
+		}
+	}
+	responses.JSON(w, http.StatusOK, map[string]interface{}{
+		"added": added,
+	})
 }

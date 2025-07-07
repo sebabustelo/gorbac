@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -283,6 +284,14 @@ func TokenValid(r *http.Request) (status bool) {
 
 }
 
+// Añadir función para comparar endpoints con parámetros
+func matchEndpoint(pattern, path string) bool {
+	re := regexp.MustCompile(`\{[^/]+\}`)
+	patternRegex := re.ReplaceAllString(pattern, `[^/]+`)
+	matched, _ := regexp.MatchString("^"+patternRegex+"$", path)
+	return matched
+}
+
 // AuthorizeEndpoint verifica si el usuario tiene permiso para acceder al endpoint
 func AuthorizeEndpoint(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -293,6 +302,7 @@ func AuthorizeEndpoint(next http.Handler) http.Handler {
 		}
 		userID := claim.User.ID
 		endpoint := r.URL.Path
+		method := r.Method
 
 		db := db.Instance()
 
@@ -309,7 +319,7 @@ func AuthorizeEndpoint(next http.Handler) http.Handler {
 		hasPermission := false
 		for _, role := range user.Roles {
 			for _, api := range role.Apis {
-				if api.Endpoint == endpoint {
+				if matchEndpoint(api.Endpoint, endpoint) && strings.EqualFold(api.Tipo, method) {
 					hasPermission = true
 					break
 				}

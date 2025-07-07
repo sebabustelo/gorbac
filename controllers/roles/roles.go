@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"api-rbac/db"
 	"api-rbac/models"
 
 	responses "api-rbac/helpers"
@@ -93,4 +94,50 @@ func GetApisByRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responses.JSON(w, http.StatusOK, result)
+}
+
+// UpdateApis actualiza las APIs permitidas de un rol
+func UpdateApis(w http.ResponseWriter, r *http.Request) {
+	idRole := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idRole)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, errors.New("ID inválido"))
+		return
+	}
+
+	var payload struct {
+		Apis []int `json:"apis"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db := db.Instance()
+	var role models.Role
+	if err := db.Preload("Apis").First(&role, id).Error; err != nil {
+		responses.ERROR(w, http.StatusNotFound, errors.New("Rol no encontrado"))
+		return
+	}
+
+	// Obtener las APIs a asociar
+	var apis []models.Api
+	if len(payload.Apis) > 0 {
+		if err := db.Where("id IN (?)", payload.Apis).Find(&apis).Error; err != nil {
+			responses.ERROR(w, http.StatusBadRequest, err)
+			return
+		}
+	}
+
+	// Actualizar la relación
+	if err := db.Model(&role).Association("Apis").Replace(apis).Error; err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusOK, map[string]interface{}{
+		"message": "APIs actualizadas correctamente",
+		"role":    role.ID,
+		"apis":    payload.Apis,
+	})
 }

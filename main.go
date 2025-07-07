@@ -82,13 +82,18 @@ func main() {
 		r.Get("/roles", roles.Index)
 		r.Post("/roles/add", roles.Add)
 		r.Get("/roles/{id}", roles.GetByID)
-		r.Post("/products", products.Add)
+		r.Post("/products/add", products.Add)
 		r.Put("/products/{id}", products.Edit)
 		r.Delete("/products/{id}", products.Delete)
 		r.Get("/apis", apis.Index)
-		r.Post("/apis", apis.Add)
+		r.Get("/apis/{id}", apis.GetByID)
+		r.Post("/apis/add", apis.Add)
 		r.Put("/apis/{id}", apis.Edit)
 		r.Delete("/apis/{id}", apis.Delete)
+		r.Put("/roles/{id}/apis", roles.UpdateApis)
+		r.Get("/apis/sync", apis.SyncApis)
+		r.Post("/apis/sync", apis.AddMissingApis)
+		//r.Get("/products", products.Index)
 
 	})
 	// Public routes
@@ -98,7 +103,7 @@ func main() {
 		//r.Get("/validate", authentication.TokenValid)
 		r.Get("/refresh", authentication.RefreshToken)
 		r.Get("/products", products.Index)
-		r.Get("/apis", apis.Index)
+		r.Get("/products/{id}", products.GetByID)
 		r.Post("/google-login", authentication.GoogleLogin)
 
 		// Health check endpoint

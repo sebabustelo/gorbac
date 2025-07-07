@@ -12,6 +12,7 @@ type Api struct {
 	Description string `json:"description"`
 	Hidden      bool   `json:"hidden"`
 	Public      bool   `json:"public"`
+	Tipo        string `json:"tipo" gorm:"not null;default:'GET'"`
 	Roles       []Role `gorm:"many2many:roles_apis;"`
 }
 

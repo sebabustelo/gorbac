@@ -173,3 +173,36 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 
 	responses.JSON(w, http.StatusOK, map[string]string{"message": "Producto eliminado correctamente"})
 }
+
+func GetByID(w http.ResponseWriter, r *http.Request) {
+	productID := chi.URLParam(r, "id")
+	if productID == "" {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("ID de producto requerido"))
+		return
+	}
+
+	id, err := strconv.ParseUint(productID, 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("ID de producto inválido"))
+		return
+	}
+
+	product := models.Product{}
+	existingProduct, err := product.GetByID(int(id))
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, fmt.Errorf("producto no encontrado"))
+		return
+	}
+
+	productResponse := ProductResponse{
+		ID:          strconv.FormatUint(uint64(existingProduct.ID), 10),
+		Nombre:      existingProduct.Name,
+		Descripcion: existingProduct.Description,
+		Precio:      existingProduct.Price,
+		Stock:       existingProduct.Stock,
+		Categoria:   existingProduct.Category.Name,
+		Imagen:      existingProduct.Image,
+	}
+
+	responses.JSON(w, http.StatusOK, productResponse)
+}
