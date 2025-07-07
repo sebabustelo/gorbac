@@ -2,6 +2,7 @@ package main
 
 import (
 	"api-rbac/authentication"
+	"api-rbac/controllers/apis"
 	"api-rbac/controllers/products"
 	"api-rbac/controllers/roles"
 	"api-rbac/controllers/users"
@@ -81,6 +82,13 @@ func main() {
 		r.Get("/roles", roles.Index)
 		r.Post("/roles/add", roles.Add)
 		r.Get("/roles/{id}", roles.GetByID)
+		r.Post("/products", products.Add)
+		r.Put("/products/{id}", products.Edit)
+		r.Delete("/products/{id}", products.Delete)
+		r.Get("/apis", apis.Index)
+		r.Post("/apis", apis.Add)
+		r.Put("/apis/{id}", apis.Edit)
+		r.Delete("/apis/{id}", apis.Delete)
 
 	})
 	// Public routes
@@ -90,12 +98,36 @@ func main() {
 		//r.Get("/validate", authentication.TokenValid)
 		r.Get("/refresh", authentication.RefreshToken)
 		r.Get("/products", products.Index)
+		r.Get("/apis", apis.Index)
 		r.Post("/google-login", authentication.GoogleLogin)
 
 		// Health check endpoint
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"status":"ok"}`))
+		})
+
+		// Auth check endpoint
+		r.Get("/auth/check", func(w http.ResponseWriter, r *http.Request) {
+			token := r.Header.Get("Authorization")
+			if token == "" {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"error":"No token provided"}`))
+				return
+			}
+
+			// Remove "Bearer " prefix
+			token = strings.TrimPrefix(token, "Bearer ")
+
+			// Basic token validation
+			if token == "" {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"error":"Invalid token format"}`))
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"token_present"}`))
 		})
 
 	})

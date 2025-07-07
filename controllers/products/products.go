@@ -2,11 +2,14 @@ package products
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"api-rbac/models"
 	"api-rbac/responses"
+
+	"github.com/go-chi/chi"
 )
 
 // ProductResponse representa la estructura que espera el frontend
@@ -65,19 +68,108 @@ func Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responses.JSON(w, http.StatusOK, productAdd)
+	// Convertir a la estructura de respuesta del frontend
+	productResponse := ProductResponse{
+		ID:          strconv.FormatUint(uint64(productAdd.ID), 10),
+		Nombre:      productAdd.Name,
+		Descripcion: productAdd.Description,
+		Precio:      productAdd.Price,
+		Stock:       productAdd.Stock,
+		Categoria:   productAdd.Category.Name,
+		Imagen:      productAdd.Image,
+	}
+
+	responses.JSON(w, http.StatusOK, productResponse)
 }
 
 func Edit(w http.ResponseWriter, r *http.Request) {
+	// Obtener el ID del producto de la URL
+	productID := chi.URLParam(r, "id")
+	if productID == "" {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("ID de producto requerido"))
+		return
+	}
 
-	var product models.Product
-	json.NewDecoder(r.Body).Decode(&product)
+	// Convertir el ID a uint
+	id, err := strconv.ParseUint(productID, 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("ID de producto inválido"))
+		return
+	}
 
+	// Decodificar el cuerpo de la petición
+	var productUpdate models.Product
+	if err := json.NewDecoder(r.Body).Decode(&productUpdate); err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Obtener el producto existente
+	product := models.Product{}
+	existingProduct, err := product.GetByID(int(id))
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, fmt.Errorf("producto no encontrado"))
+		return
+	}
+
+	// Actualizar los campos del producto
+	existingProduct.Name = productUpdate.Name
+	existingProduct.Description = productUpdate.Description
+	existingProduct.Price = productUpdate.Price
+	existingProduct.Stock = productUpdate.Stock
+	existingProduct.CategoryID = productUpdate.CategoryID
+	existingProduct.Image = productUpdate.Image
+
+	// Guardar los cambios
+	updatedProduct, err := existingProduct.Update()
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Convertir a la estructura de respuesta del frontend
+	productResponse := ProductResponse{
+		ID:          strconv.FormatUint(uint64(updatedProduct.ID), 10),
+		Nombre:      updatedProduct.Name,
+		Descripcion: updatedProduct.Description,
+		Precio:      updatedProduct.Price,
+		Stock:       updatedProduct.Stock,
+		Categoria:   updatedProduct.Category.Name,
+		Imagen:      updatedProduct.Image,
+	}
+
+	responses.JSON(w, http.StatusOK, productResponse)
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
+	// Obtener el ID del producto de la URL
+	productID := chi.URLParam(r, "id")
+	if productID == "" {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("ID de producto requerido"))
+		return
+	}
 
-	var product models.Product
-	json.NewDecoder(r.Body).Decode(&product)
+	// Convertir el ID a uint
+	id, err := strconv.ParseUint(productID, 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("ID de producto inválido"))
+		return
+	}
 
+	// Obtener el producto existente
+	product := models.Product{}
+	existingProduct, err := product.GetByID(int(id))
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, fmt.Errorf("producto no encontrado"))
+		return
+	}
+
+	// Eliminar el producto
+	err = existingProduct.Delete()
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusOK, map[string]string{"message": "Producto eliminado correctamente"})
 }

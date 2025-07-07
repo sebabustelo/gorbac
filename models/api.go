@@ -15,12 +15,60 @@ type Api struct {
 	Roles       []Role `gorm:"many2many:roles_apis;"`
 }
 
-func (u *Api) FindAll() ([]Api, error) {
+func (a *Api) FindAll() ([]Api, error) {
 	db := db.Instance()
 
 	apis := []Api{}
 
-	db.Preload("Role").Find(&apis)
+	err := db.Preload("Roles").Find(&apis).Error
+	if err != nil {
+		return nil, err
+	}
 
 	return apis, nil
+}
+
+func (a *Api) GetByID(id int) (Api, error) {
+	db := db.Instance()
+
+	api := Api{}
+	err := db.Preload("Roles").Where("id = ?", id).First(&api).Error
+	if err != nil {
+		return api, err
+	}
+
+	return api, nil
+}
+
+func (a *Api) Create() (Api, error) {
+	db := db.Instance()
+
+	err := db.Create(&a).Error
+	if err != nil {
+		return Api{}, err
+	}
+
+	return *a, nil
+}
+
+func (a *Api) Update() (Api, error) {
+	db := db.Instance()
+
+	err := db.Save(&a).Error
+	if err != nil {
+		return Api{}, err
+	}
+
+	return *a, nil
+}
+
+func (a *Api) Delete() error {
+	db := db.Instance()
+
+	err := db.Delete(&a).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
