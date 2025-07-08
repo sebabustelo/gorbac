@@ -19,7 +19,12 @@ var (
 	publicKey *rsa.PublicKey
 )
 
-// Lista manual de rutas del router (privadas y públicas)
+// SetRoutes establece las rutas dinámicamente desde main.go
+func SetRoutes(routes []string) {
+	allRoutes = routes
+}
+
+// Lista de rutas del router (se establece dinámicamente desde main.go)
 var allRoutes = []string{
 	"/users/add",
 	"/users/edit",
@@ -30,7 +35,6 @@ var allRoutes = []string{
 	"/roles/add",
 	"/roles/{id}",
 	"/products/add",
-	"/products/{id}",
 	"/products/{id}",
 	"/apis",
 	"/apis/add",
@@ -43,6 +47,11 @@ var allRoutes = []string{
 	"/google-login",
 	"/health",
 	"/auth/check",
+	// Orders routes
+	"/orders",
+	"/orders/{id}",
+	"/orders/{id}/status",
+	"/orders/user/{user_id}",
 }
 
 // Index retorna un listado de todas las APIs

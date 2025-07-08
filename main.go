@@ -3,6 +3,7 @@ package main
 import (
 	"api-rbac/authentication"
 	"api-rbac/controllers/apis"
+	"api-rbac/controllers/orders"
 	"api-rbac/controllers/products"
 	"api-rbac/controllers/roles"
 	"api-rbac/controllers/users"
@@ -10,12 +11,46 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/rs/cors"
 )
+
+var (
+	capturedRoutes []string
+	routesMutex    sync.RWMutex
+)
+
+// routeCaptureMiddleware captura las rutas automáticamente
+func routeCaptureMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := r.URL.Path
+		routesMutex.Lock()
+		// Agregar ruta si no existe
+		found := false
+		for _, existingRoute := range capturedRoutes {
+			if existingRoute == route {
+				found = true
+				break
+			}
+		}
+		if !found {
+			capturedRoutes = append(capturedRoutes, route)
+		}
+		routesMutex.Unlock()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// getRoutes retorna las rutas capturadas dinámicamente
+func getRoutes() []string {
+	routesMutex.RLock()
+	defer routesMutex.RUnlock()
+	return capturedRoutes
+}
 
 func main() {
 
@@ -66,6 +101,7 @@ func main() {
 		middleware.Recoverer,
 		middleware.RequestID,
 		middleware.RealIP,
+		routeCaptureMiddleware,
 	)
 	r.Use(cors.Handler)
 
@@ -93,6 +129,12 @@ func main() {
 		r.Put("/roles/{id}/apis", roles.UpdateApis)
 		r.Get("/apis/sync", apis.SyncApis)
 		r.Post("/apis/sync", apis.AddMissingApis)
+		// Orders routes
+		r.Post("/orders", orders.Create)
+		r.Get("/orders", orders.Index)
+		r.Get("/orders/{id}", orders.GetByID)
+		r.Put("/orders/{id}/status", orders.UpdateStatus)
+		r.Delete("/orders/{id}", orders.Delete)
 		//r.Get("/products", products.Index)
 
 	})
@@ -105,6 +147,8 @@ func main() {
 		r.Get("/products", products.Index)
 		r.Get("/products/{id}", products.GetByID)
 		r.Post("/google-login", authentication.GoogleLogin)
+		// Public orders routes
+		r.Get("/orders/user/{user_id}", orders.GetByUser)
 
 		// Health check endpoint
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +180,9 @@ func main() {
 		})
 
 	})
+
+	// Establecer las rutas dinámicamente para el sistema de APIs
+	apis.SetRoutes(getRoutes())
 
 	// Use Railway's PORT if available, otherwise use default 8229
 	port := os.Getenv("PORT")
