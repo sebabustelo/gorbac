@@ -52,6 +52,10 @@ var allRoutes = []string{
 	"/orders/{id}",
 	"/orders/{id}/status",
 	"/orders/user/{user_id}",
+	// Cart routes
+	"/cart",
+	"/cart/add",
+	"/cart/items/{id}",
 }
 
 // Index retorna un listado de todas las APIs

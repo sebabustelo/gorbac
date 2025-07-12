@@ -11,8 +11,7 @@ import (
 )
 
 type CreateOrderRequest struct {
-	UserID uint               `json:"user_id"`
-	Items  []OrderItemRequest `json:"items"`
+	Items []OrderItemRequest `json:"items"`
 }
 
 type OrderItemRequest struct {
@@ -25,6 +24,15 @@ type UpdateStatusRequest struct {
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
+	// Obtener el claim del contexto
+	claim, ok := r.Context().Value("user").(models.Claim)
+	if !ok {
+		responses.ERROR(w, http.StatusUnauthorized, nil)
+		return
+	}
+
+	userID := claim.User.ID
+
 	var req CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
@@ -70,7 +78,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 
 	// Crear orden
 	order := models.Order{
-		UserID:      req.UserID,
+		UserID:      userID,
 		TotalAmount: totalAmount,
 		Status:      "pending",
 		Items:       orderItems,
@@ -115,15 +123,17 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetByUser(w http.ResponseWriter, r *http.Request) {
-	userIDStr := chi.URLParam(r, "user_id")
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, err)
+	// Obtener el claim del contexto
+	claim, ok := r.Context().Value("user").(models.Claim)
+	if !ok {
+		responses.ERROR(w, http.StatusUnauthorized, nil)
 		return
 	}
 
+	userID := claim.User.ID
+
 	order := models.Order{}
-	orders, err := order.GetByUser(userID)
+	orders, err := order.GetByUser(int(userID))
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return

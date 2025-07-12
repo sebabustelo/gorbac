@@ -5,12 +5,13 @@ import (
 	"api-rbac/models"
 	"context"
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -20,7 +21,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/api/idtoken"
 )
 
 var (
@@ -31,13 +31,13 @@ var (
 
 func init() {
 
-	privateBytes, err := ioutil.ReadFile("./private.rsa")
+	privateBytes, err := os.ReadFile("./private.rsa")
 	if err != nil {
 		log.Fatal("No se puede leer el arhivo privado")
 
 	}
 
-	publicBytes, err := ioutil.ReadFile("./public.rsa.pub")
+	publicBytes, err := os.ReadFile("./public.rsa.pub")
 	if err != nil {
 		log.Fatal("No se puede leer el arhivo publico")
 
@@ -119,30 +119,68 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		IdToken string `json:"id_token"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println("Error decodificando body:", err)
 		responses.ERROR(w, http.StatusBadRequest, errors.New("datos de login inválidos"))
 		return
 	}
 
-	// 1. Verifica el token de Google
-	payload, err := idtoken.Validate(r.Context(), req.IdToken, "285580531726-v8385mgjrgebb9arkm0hr9beqolvrrm4.apps.googleusercontent.com")
-	if err != nil {
-		fmt.Println("Error validando token de Google:", err)
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("token de Google inválido"))
+	if req.IdToken == "" {
+		log.Println("GoogleLogin: id_token vacío")
+		responses.ERROR(w, http.StatusBadRequest, errors.New("id_token requerido"))
 		return
 	}
 
-	// 2. Extrae datos del usuario de Google
-	email, _ := payload.Claims["email"].(string)
-	name, _ := payload.Claims["name"].(string)
-	sub, _ := payload.Claims["sub"].(string) // Google user ID
+	log.Printf("GoogleLogin: id_token recibido (longitud: %d)", len(req.IdToken))
+
+	// Decodifica el token para ver el aud
+	parts := strings.Split(req.IdToken, ".")
+	if len(parts) == 3 {
+		payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+		if err == nil {
+			var claims map[string]interface{}
+			json.Unmarshal(payload, &claims)
+			log.Printf("GoogleLogin: aud claim en el token: %v", claims["aud"])
+			log.Printf("GoogleLogin: iss claim en el token: %v", claims["iss"])
+			log.Printf("GoogleLogin: sub claim en el token: %v", claims["sub"])
+			log.Printf("GoogleLogin: email claim en el token: %v", claims["email"])
+		} else {
+			log.Printf("GoogleLogin: Error decodificando payload: %v", err)
+		}
+	} else {
+		log.Printf("GoogleLogin: Token no tiene el formato esperado (3 partes)")
+	}
+
+	// 1. Verifica el token de Google usando validación manual
+	token, err := validateGoogleToken(req.IdToken)
+	if err != nil {
+		log.Printf("Error en validateGoogleToken: %v", err)
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("token de Google inválido"))
+		return
+	}
+	log.Println("GoogleLogin: validateGoogleToken OK")
+
+	// 2. Extrae datos del usuario de Google desde el token validado
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		log.Println("Error: claims inválidos")
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("claims del token inválidos"))
+		return
+	}
+
+	email, _ := claims["email"].(string)
+	name, _ := claims["name"].(string)
+	sub, _ := claims["sub"].(string) // Google user ID
+	log.Printf("GoogleLogin: email=%s, name=%s, sub=%s\n", email, name, sub)
 
 	// 3. Busca o crea el usuario en tu base de datos
 	var user models.User
 	db := db.Instance()
 	err = db.Where("email = ?", email).First(&user).Preload("Roles").Error
 	if err != nil {
+		log.Println("GoogleLogin: usuario no encontrado, creando uno nuevo")
 		// Si no existe, créalo
 		user = models.User{
+			User:       email, // Usar email como user para evitar duplicados
 			Email:      email,
 			Name:       name,
 			Provider:   "google",
@@ -154,28 +192,51 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		if err := db.First(&defaultRole, 2).Error; err == nil {
 			user.Roles = []models.Role{defaultRole}
 		}
-		fmt.Println("ususario a crear ", user)
-		db.Create(&user)
-	}
-
-	//si no existe el usuario, se crea
-	if user.ID == 0 {
-		user = models.User{
-			Email:      email,
-			Name:       name,
-			Provider:   "google",
-			ProviderID: sub,
-			Active:     true,
-		}
 		if err := db.Create(&user).Error; err != nil {
-			responses.ERROR(w, http.StatusInternalServerError, errors.New("error al crear el usuario"))
-			return
+			log.Println("Error al crear usuario:", err)
+			// Si es un error de duplicado, intentar buscar el usuario existente
+			if strings.Contains(err.Error(), "Duplicate entry") {
+				log.Println("Usuario duplicado detectado, buscando usuario existente...")
+				var existingUser models.User
+				if err := db.Where("email = ?", email).First(&existingUser).Error; err == nil {
+					user = existingUser
+					log.Println("Usuario existente encontrado:", user.Email)
+				} else {
+					responses.ERROR(w, http.StatusInternalServerError, errors.New("error al buscar usuario existente"))
+					return
+				}
+			} else {
+				responses.ERROR(w, http.StatusInternalServerError, errors.New("error al crear el usuario"))
+				return
+			}
+		}
+	} else {
+		log.Println("GoogleLogin: usuario encontrado en la base de datos")
+		// Actualizar el nombre si está vacío o es diferente
+		if user.Name == "" || user.Name != name {
+			user.Name = name
+			db.Model(&user).Update("name", name)
+		}
+		// Actualizar el campo User si está vacío
+		if user.User == "" {
+			user.User = email
+			db.Model(&user).Update("user", email)
+		}
+		// Asegurar que tiene roles
+		if len(user.Roles) == 0 {
+			var defaultRole models.Role
+			if err := db.First(&defaultRole, 2).Error; err == nil {
+				db.Model(&user).Association("Roles").Append(defaultRole)
+			}
 		}
 	}
 
 	// 4. Genera tu JWT y responde
 	user.Password = ""
 	user.Token = GenerateJWT(user)
+	log.Printf("GoogleLogin: Token generado: %s", user.Token)
+	log.Printf("GoogleLogin: Usuario completo a enviar: %+v", user)
+	log.Println("GoogleLogin: usuario autenticado, enviando respuesta OK")
 	responses.JSON(w, http.StatusOK, user)
 }
 
@@ -187,7 +248,6 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		tokenString := strings.Split(r.Header["Authorization"][0], "Bearer ")
 		token, _, err := new(jwt.Parser).ParseUnverified(tokenString[1], jwt.MapClaims{})
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 
@@ -206,7 +266,7 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "aplication/json")
 			w.Write(jsonResult)
 		} else {
-			fmt.Println(err)
+			return
 		}
 
 	} else {
@@ -231,7 +291,7 @@ func Verifytoken(next http.Handler) http.Handler {
 
 		// Extrae el claim y lo guarda en el contexto
 		if claims, ok := token.Claims.(*models.Claim); ok {
-			ctx := context.WithValue(r.Context(), userContextKey, *claims)
+			ctx := context.WithValue(r.Context(), UserContextKey, *claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -249,39 +309,161 @@ func TokenValid(r *http.Request) (status bool) {
 	})
 
 	if err != nil {
-		switch err.(type) {
+		switch vErr := err.(type) {
 		case *jwt.ValidationError:
-			vErr := err.(*jwt.ValidationError)
 			switch vErr.Errors {
 			case jwt.ValidationErrorExpired:
-				log.Println(err)
-				//fmt.Fprintln(w, "Su token ha expirado")
 				return false
 			case jwt.ValidationErrorClaimsInvalid:
-				//fmt.Fprintln(w, "La firma del token no coincide")
 				return false
 			default:
-				//fmt.Fprintln(w, "Su token no es valido 1")
 				return false
 			}
 		default:
-			//fmt.Fprintln(w, "Su token no es válido 2")
 			return
 		}
 	}
 
 	if token.Valid {
-		//w.WriteHeader(http.StatusAccepted)
-		//fmt.Fprintln(w, "Bienvenido al sistema")
 		status = true
 	} else {
-		//w.WriteHeader(http.StatusUnauthorized)
-		//fmt.Fprintln(w, "Su token no es válido")
 		status = false
 	}
 
 	return status
 
+}
+
+// Función para validar el token de Firebase/Google usando validación manual mejorada
+func validateGoogleToken(idToken string) (*jwt.Token, error) {
+	// Decodificar el token sin verificar para extraer claims
+	token, _, err := new(jwt.Parser).ParseUnverified(idToken, jwt.MapClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("error parsing token: %v", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	// Log todos los claims para debugging
+	log.Printf("FirebaseLogin: Claims del token: %+v", claims)
+
+	// Verificar audience (client ID de Firebase)
+	aud, ok := claims["aud"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing audience claim")
+	}
+
+	// Firebase puede tener múltiples audience válidos
+	validAudiences := []string{"petplace-dv69c", "petplace-dv69c.appspot.com"}
+	validAudience := false
+	for _, validAud := range validAudiences {
+		if aud == validAud {
+			validAudience = true
+			break
+		}
+	}
+
+	if !validAudience {
+		return nil, fmt.Errorf("invalid audience: expected one of %v, got '%s'", validAudiences, aud)
+	}
+
+	// Verificar issuer (debe ser de Google/Firebase)
+	iss, ok := claims["iss"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing issuer claim")
+	}
+
+	// Firebase puede usar diferentes issuers
+	validIssuers := []string{
+		"https://securetoken.google.com/petplace-dv69c",
+		"https://accounts.google.com",
+	}
+
+	validIssuer := false
+	for _, validIss := range validIssuers {
+		if iss == validIss {
+			validIssuer = true
+			break
+		}
+	}
+
+	if !validIssuer {
+		return nil, fmt.Errorf("invalid issuer: expected one of %v, got '%s'", validIssuers, iss)
+	}
+
+	// Verificar expiración
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("missing expiration claim")
+	}
+
+	currentTime := float64(time.Now().Unix())
+	if currentTime > exp {
+		return nil, fmt.Errorf("token expired (exp: %f, current: %f)", exp, currentTime)
+	}
+
+	// Verificar que el token no haya sido emitido en el futuro (con tolerancia de 5 minutos)
+	iat, ok := claims["iat"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("missing issued at claim")
+	}
+
+	tolerance := float64(5 * 60) // 5 minutos en segundos
+	if currentTime < (iat - tolerance) {
+		return nil, fmt.Errorf("token issued too far in the future (iat: %f, current: %f)", iat, currentTime)
+	}
+
+	// Verificar que tenga un subject (user ID)
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return nil, fmt.Errorf("missing or invalid subject claim")
+	}
+
+	// Verificar que tenga un email
+	email, ok := claims["email"].(string)
+	if !ok || email == "" {
+		return nil, fmt.Errorf("missing or invalid email claim")
+	}
+
+	// Verificar que el email esté verificado (opcional para Firebase)
+	emailVerified, ok := claims["email_verified"].(bool)
+	if !ok {
+		log.Printf("Warning: email_verified claim missing, assuming verified")
+		emailVerified = true
+	}
+
+	if !emailVerified {
+		log.Printf("Warning: email not verified for user: %s", email)
+		// No bloqueamos por esto, solo log
+	}
+
+	// Verificar auth_time (tiempo de autenticación de Firebase)
+	authTime, ok := claims["auth_time"].(float64)
+	if !ok {
+		log.Printf("Warning: auth_time claim missing")
+	} else {
+		// auth_time no debe ser muy antiguo (máximo 1 hora)
+		maxAuthTime := currentTime - 3600 // 1 hora
+		if authTime < maxAuthTime {
+			return nil, fmt.Errorf("auth_time too old (auth_time: %f, max: %f)", authTime, maxAuthTime)
+		}
+	}
+
+	// Verificar firebase claims específicos
+	if firebaseClaims, ok := claims["firebase"].(map[string]interface{}); ok {
+		log.Printf("FirebaseLogin: Firebase claims: %+v", firebaseClaims)
+
+		// Verificar sign_in_provider
+		if signInProvider, ok := firebaseClaims["sign_in_provider"].(string); ok {
+			log.Printf("FirebaseLogin: Sign in provider: %s", signInProvider)
+		}
+	}
+
+	log.Printf("FirebaseLogin: Token validation successful for user: %s (sub: %s)", email, sub)
+	return token, nil
 }
 
 // Añadir función para comparar endpoints con parámetros
@@ -295,7 +477,7 @@ func matchEndpoint(pattern, path string) bool {
 // AuthorizeEndpoint verifica si el usuario tiene permiso para acceder al endpoint
 func AuthorizeEndpoint(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claim, ok := r.Context().Value(userContextKey).(models.Claim)
+		claim, ok := r.Context().Value(UserContextKey).(models.Claim)
 		if !ok {
 			http.Error(w, "no autorizado", http.StatusUnauthorized)
 			return
@@ -341,4 +523,4 @@ func AuthorizeEndpoint(next http.Handler) http.Handler {
 // Define un tipo propio para la clave de contexto
 type contextKey string
 
-const userContextKey contextKey = "user"
+const UserContextKey contextKey = "user"

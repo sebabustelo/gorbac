@@ -3,6 +3,8 @@ package models
 import (
 	"api-rbac/db"
 
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -10,7 +12,7 @@ type Cart struct {
 	gorm.Model
 	UserID    uint       `json:"user_id"`
 	User      User       `json:"user"`
-	CartItems []CartItem `json:"cart_items"`
+	CartItems []CartItem `json:"cart_items" gorm:"foreignKey:CartID"`
 }
 
 func (c *Cart) FindAll() ([]Cart, error) {
@@ -25,6 +27,26 @@ func (c *Cart) FindAll() ([]Cart, error) {
 
 	return carts, nil
 }
+func (c *Cart) GetByUserID(userID uint) error {
+	db := db.Instance()
+
+	fmt.Printf("🔍 Buscando carrito para userID: %d\n", userID)
+
+	err := db.Where("user_id = ?", userID).
+		Preload("User").
+		Preload("CartItems.Product").
+		First(c).Error
+
+	if err != nil {
+		fmt.Printf("❌ Error al buscar carrito: %v\n", err)
+		return err
+	}
+
+	fmt.Printf("✅ Carrito encontrado - ID: %d, Items: %d\n", c.ID, len(c.CartItems))
+
+	return nil
+}
+
 func (c *Cart) GetByID(id int) (Cart, error) {
 	db := db.Instance()
 

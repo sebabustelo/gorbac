@@ -57,28 +57,62 @@ func Add(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&product)
 
 	if err != nil {
+		fmt.Printf("Error decodificando JSON: %v\n", err)
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
 
+	// Validar que los campos requeridos estén presentes
+	if product.Name == "" {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("nombre del producto es requerido"))
+		return
+	}
+
+	if product.Price <= 0 {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("precio debe ser mayor a 0"))
+		return
+	}
+
+	if product.Stock < 0 {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("stock no puede ser negativo"))
+		return
+	}
+
+	// Si no se especifica categoría, usar categoría por defecto (ID 1)
+	if product.CategoryID == 0 {
+		product.CategoryID = 1
+	}
+
+	fmt.Printf("Creando producto: %+v\n", product)
+
 	productAdd, err := product.Create()
 
 	if err != nil {
+		fmt.Printf("Error creando producto: %v\n", err)
 		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Recargar el producto con la categoría para obtener el nombre
+	productWithCategory, err := productAdd.GetByID(int(productAdd.ID))
+	if err != nil {
+		fmt.Printf("Error obteniendo producto con categoría: %v\n", err)
+		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Convertir a la estructura de respuesta del frontend
 	productResponse := ProductResponse{
-		ID:          strconv.FormatUint(uint64(productAdd.ID), 10),
-		Nombre:      productAdd.Name,
-		Descripcion: productAdd.Description,
-		Precio:      productAdd.Price,
-		Stock:       productAdd.Stock,
-		Categoria:   productAdd.Category.Name,
-		Imagen:      productAdd.Image,
+		ID:          strconv.FormatUint(uint64(productWithCategory.ID), 10),
+		Nombre:      productWithCategory.Name,
+		Descripcion: productWithCategory.Description,
+		Precio:      productWithCategory.Price,
+		Stock:       productWithCategory.Stock,
+		Categoria:   productWithCategory.Category.Name,
+		Imagen:      productWithCategory.Image,
 	}
 
+	fmt.Printf("Producto creado exitosamente: %+v\n", productResponse)
 	responses.JSON(w, http.StatusOK, productResponse)
 }
 
