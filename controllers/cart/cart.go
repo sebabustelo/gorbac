@@ -252,6 +252,9 @@ func RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 
 	// Obtener carrito actualizado
 	updatedCart, _ := cart.GetByID(int(cart.ID))
+	if updatedCart.CartItems == nil {
+		updatedCart.CartItems = []models.CartItem{}
+	}
 	responses.JSON(w, http.StatusOK, updatedCart)
 }
 

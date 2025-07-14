@@ -9,7 +9,6 @@ import (
 	"api-rbac/controllers/products"
 	"api-rbac/controllers/roles"
 	"api-rbac/controllers/users"
-	"api-rbac/responses"
 	"fmt"
 	"net/http"
 	"os"
@@ -136,7 +135,9 @@ func main() {
 		r.Post("/orders", orders.Create)
 		r.Get("/orders", orders.Index)
 		r.Get("/orders/{id}", orders.GetByID)
+		r.Get("/orders/user", orders.GetByUser)
 		r.Put("/orders/{id}/status", orders.UpdateStatus)
+		r.Put("/orders/{id}/payment", orders.UpdatePaymentStatus)
 		r.Delete("/orders/{id}", orders.Delete)
 		// Cart routes
 		r.Get("/cart", cart.GetCart)
@@ -157,21 +158,7 @@ func main() {
 		r.Get("/products", products.Index)
 		r.Get("/products/{id}", products.GetByID)
 		r.Post("/google-login", authentication.GoogleLogin)
-		// Test endpoint to see Google login response
-		r.Get("/test-google-response", func(w http.ResponseWriter, r *http.Request) {
-			// Simulate the response that GoogleLogin sends
-			testUser := map[string]interface{}{
-				"id":       1,
-				"email":    "test@example.com",
-				"name":     "Test User",
-				"token":    "test-jwt-token-here",
-				"provider": "google",
-				"active":   true,
-			}
-			responses.JSON(w, http.StatusOK, testUser)
-		})
-		// Public orders routes
-		r.Get("/orders/user/{user_id}", orders.GetByUser)
+		// Public orders routes - requires authentication
 		r.Get("/categories", categories.GetCategories)
 
 		// Health check endpoint

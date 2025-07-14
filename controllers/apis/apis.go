@@ -36,9 +36,14 @@ var allRoutes = []string{
 	"/roles/{id}",
 	"/products/add",
 	"/products/{id}",
+	"/products/{id}/edit",
+	"/products/{id}/delete",
 	"/apis",
 	"/apis/add",
 	"/apis/{id}",
+	"/apis/{id}/edit",
+	"/apis/{id}/delete",
+	"/apis/sync",
 	"/roles/{id}/apis",
 	"/login",
 	"/roles/permissions/{id}/apis",
@@ -49,13 +54,20 @@ var allRoutes = []string{
 	"/auth/check",
 	// Orders routes
 	"/orders",
+	"/orders/index",
 	"/orders/{id}",
 	"/orders/{id}/status",
-	"/orders/user/{user_id}",
+	"/orders/{id}/payment",
+	"/orders/{id}/delete",
+	"/orders/user",
+	// Categories routes
+	"/categories",
 	// Cart routes
 	"/cart",
 	"/cart/add",
 	"/cart/items/{id}",
+	"/cart/items/{id}/delete",
+	"/cart/clear",
 }
 
 // Index retorna un listado de todas las APIs
@@ -228,7 +240,7 @@ func SyncApis(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	responses.JSON(w, http.StatusOK, map[string]interface{}{
+	responses.JSON(w, http.StatusOK, map[string]any{
 		"missing":  missing,
 		"existing": existing,
 	})
@@ -254,7 +266,7 @@ func AddMissingApis(w http.ResponseWriter, r *http.Request) {
 			added = append(added, ep)
 		}
 	}
-	responses.JSON(w, http.StatusOK, map[string]interface{}{
+	responses.JSON(w, http.StatusOK, map[string]any{
 		"added": added,
 	})
 }
