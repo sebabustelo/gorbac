@@ -5,6 +5,4 @@ GoWork.code-workspace
 RAILWAY_DEPLOYMENT.md
 railway.json
 main
-go.mod
-go.sum
 .gitignore 
