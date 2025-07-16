@@ -15,10 +15,10 @@ El backend de Gorbac está diseñado bajo una arquitectura modular y desacoplada
 ### Diagrama Simplificado
 
 ```mermaid
-graph TD;
-  subgraph Backend (Go)
+graph TD
+  subgraph Backend_Go
     API[API REST]
-    Auth[Autenticación JWT]
+    Auth[Autenticacion JWT]
     Ctrl[Controladores]
     Models[Modelos]
   end
@@ -28,8 +28,8 @@ graph TD;
   Frontend -- HTTP/JSON --> API
   API -- ORM/SQL --> DB
   API -- JWT --> Auth
-  API -- Llama --> Ctrl
-  Ctrl -- Llama --> Models
+  API -- llama --> Ctrl
+  Ctrl -- llama --> Models
   Models -- ORM/SQL --> DB
 ```
 
