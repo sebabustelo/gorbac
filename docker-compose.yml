@@ -1,0 +1,70 @@
+version: '3.1'
+
+services:
+  # Rbac
+  api-rbac:
+    hostname: api-rbac
+    container_name: api-rbac
+    restart: always 
+    build: 
+        context: .
+    ports:
+      - 8229:8229
+    networks:
+      - desarrollo
+    environment:
+      - GO_ENV=local
+      #- GO_ENV=test
+      #- GO_ENV=production
+  # Mariadb
+  database-mariadb:
+    hostname: database-mariadb 
+    container_name: database-mariadb 
+    image: mariadb
+    restart: always
+    ports:
+      -  "3306:3306"
+    expose:
+      -  "3306"
+    volumes:
+      - mariadatadev:/var/lib/mysql
+      - ./db/gorbac.sql:/docker-entrypoint-initdb.d/gorbac.sql    
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+        MYSQL_ROOT_PASSWORD: esmeralda1212
+        MYSQL_DATABASE: gorbac
+        MYSQL_USER: test
+        MYSQL_PASSWORD: root123
+    networks:
+        - desarrollo
+
+  # Test Database
+  # database-mariadb-test:
+  #   hostname: database-mariadb-test
+  #   container_name: database-mariadb-test
+  #   image: mariadb
+  #   restart: always
+  #   ports:
+  #     - "3307:3306"
+  #   expose:
+  #     - "3306"
+  #   volumes:
+  #     - mariadatatest:/var/lib/mysql
+  #     - ./db/gorbac_test.sql:/docker-entrypoint-initdb.d/gorbac_test.sql
+  #   command: --default-authentication-plugin=mysql_native_password
+  #   environment:
+  #       MYSQL_ROOT_PASSWORD: esmeralda1212
+  #       MYSQL_DATABASE: gorbac_test
+  #       MYSQL_USER: test
+  #       MYSQL_PASSWORD: root123
+  #   networks:
+  #       - desarrollo
+
+networks:
+    desarrollo:
+        driver: bridge        
+      
+volumes:
+  mariadatadev:
+  #mariadatatest:
+
