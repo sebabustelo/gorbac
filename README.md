@@ -1,4 +1,7 @@
-# Backend Gorbac - Documentación
+# Backend Gorbac
+
+**Carrito de compras con control de acceso basado en roles (RBAC), desarrollado en Go.**
+Incluye autenticación JWT, endpoints RESTful y gestión de usuarios, roles, permisos, productos, órdenes y carrito sobre MariaDB.
 
 > **⚠️ Seguridad:**
 > 
