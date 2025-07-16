@@ -1,5 +1,26 @@
 # Backend Gorbac - Documentación
 
+> **⚠️ Seguridad:**
+> 
+> El backend requiere un par de claves RSA para firmar y verificar los tokens JWT:
+> - `private.rsa` (clave privada)
+> - `public.rsa.pub` (clave pública)
+>
+> **Estas claves no deben subirse nunca al repositorio.**
+>
+> ### ¿Cómo generarlas?
+> Ejecuta estos comandos en la raíz del proyecto:
+> ```bash
+> # Generar clave privada (2048 bits)
+> openssl genrsa -out private.rsa 2048
+> # Extraer la clave pública
+> openssl rsa -in private.rsa -pubout -out public.rsa.pub
+> ```
+>
+> Coloca ambos archivos (`private.rsa` y `public.rsa.pub`) en la raíz del proyecto backend (`gorbac/`).
+>
+> Si una clave privada se filtra, genera una nueva y reemplázala en todos los entornos.
+
 ## Arquitectura del Proyecto
 
 El backend de Gorbac está diseñado bajo una arquitectura modular y desacoplada, ideal para sistemas de control de acceso y gestión de recursos. Los principales componentes son:
