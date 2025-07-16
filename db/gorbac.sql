@@ -165,14 +165,3 @@ INSERT INTO products (name, description, price, stock, category_id, image) VALUE
 ('Funda Soft', 'Práctica, cómoda y acolchada. Ideal para usar sobre colchones o dentro de cuchas rígidas. Exterior de algodón peinado y relleno de espuma de poliuretano.', 97.00, 6, 2, '/img/fundas/funda3.jpg'),
 ('Funda Doble', 'Funda reversible con doble cara: una térmica para invierno y otra fresca para verano. ¡2 en 1! Cara térmica de polar y cara fresca de algodón, con relleno de fibra hueca siliconada.', 97.00, 6, 2, '/img/fundas/funda4.jpg');
 
--- Inserción de carritos
-INSERT INTO carts (user_id) VALUES
-(2),
-(3);
-
--- Inserción de ítems en carritos
-INSERT INTO cart_items (cart_id, product_id, quantity, price) VALUES
-(1, 1, 1, 850.00),
-(1, 2, 2, 50.00),
-(2, 3, 1, 15.00);
-

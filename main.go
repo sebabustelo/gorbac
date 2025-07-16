@@ -112,41 +112,60 @@ func main() {
 		r.Use(authentication.Verifytoken)
 		r.Use(authentication.AuthorizeEndpoint)
 
-		r.Post("/users/add", users.Add)
-		r.Post("/users/edit", users.Edit)
-		r.Delete("/users/delete/{id}", users.Delete)
-		r.Get("/users/{id}", users.GetByID)
-		r.Get("/users/index", users.Index)
-		r.Get("/roles", roles.Index)
-		r.Post("/roles/add", roles.Add)
-		r.Get("/roles/{id}", roles.GetByID)
-		r.Post("/products/add", products.Add)
-		r.Put("/products/{id}", products.Edit)
-		r.Delete("/products/{id}", products.Delete)
-		r.Get("/apis", apis.Index)
-		r.Get("/apis/{id}", apis.GetByID)
-		r.Post("/apis/add", apis.Add)
-		r.Put("/apis/{id}", apis.Edit)
-		r.Delete("/apis/{id}", apis.Delete)
-		r.Put("/roles/{id}/apis", roles.UpdateApis)
-		r.Get("/apis/sync", apis.SyncApis)
-		r.Post("/apis/sync", apis.AddMissingApis)
-		// Orders routes
-		r.Post("/orders", orders.Create)
-		r.Get("/orders", orders.Index)
-		r.Get("/orders/{id}", orders.GetByID)
-		r.Get("/orders/user", orders.GetByUser)
-		r.Put("/orders/{id}/status", orders.UpdateStatus)
-		r.Put("/orders/{id}/payment", orders.UpdatePaymentStatus)
-		r.Delete("/orders/{id}", orders.Delete)
-		// Cart routes
-		r.Get("/cart", cart.GetCart)
-		r.Post("/cart/add", cart.AddToCart)
-		r.Put("/cart/items/{id}", cart.UpdateCartItem)
-		r.Delete("/cart/items/{id}", cart.RemoveFromCart)
-		r.Delete("/cart", cart.ClearCart)
+		// ==============================================
+		// Endpoints de APIs Management
+		// ==============================================
+		r.Delete("/apis/{id}", apis.Delete)       // Eliminar un endpoint API específico
+		r.Get("/apis", apis.Index)                // Listar todos los endpoints API
+		r.Get("/apis/{id}", apis.GetByID)         // Obtener detalles de un endpoint API específico
+		r.Post("/apis/add", apis.Add)             // Agregar un nuevo endpoint API
+		r.Put("/apis/{id}", apis.Edit)            // Editar un endpoint API existente
+		r.Get("/apis/sync", apis.SyncApis)        // Sincronizar endpoints (lectura)
+		r.Post("/apis/sync", apis.AddMissingApis) // Sincronizar endpoints (escritura)
 
-		//r.Get("/products", products.Index)
+		// ==============================================
+		// Endpoints de Carrito de Compras
+		// ==============================================
+		r.Delete("/cart", cart.ClearCart)                 // Vaciar el carrito por completo
+		r.Get("/cart", cart.GetCart)                      // Obtener el contenido del carrito
+		r.Post("/cart/add", cart.AddToCart)               // Agregar item al carrito
+		r.Delete("/cart/items/{id}", cart.RemoveFromCart) // Eliminar item específico del carrito
+		r.Put("/cart/items/{id}", cart.UpdateCartItem)    // Actualizar cantidad de item en carrito
+
+		// ==============================================
+		// Endpoints de Órdenes/Pedidos
+		// ==============================================
+		r.Post("/orders", orders.Create)                          // Crear una nueva orden
+		r.Get("/orders", orders.Index)                            // Listar todas las órdenes
+		r.Get("/orders/{id}", orders.GetByID)                     // Obtener detalles de una orden específica
+		r.Get("/orders/user", orders.GetByUser)                   // Obtener órdenes del usuario actual
+		r.Delete("/orders/{id}", orders.Delete)                   // Eliminar una orden (admin)
+		r.Put("/orders/{id}/payment", orders.UpdatePaymentStatus) // Actualizar estado de pago
+		r.Put("/orders/{id}/status", orders.UpdateStatus)         // Actualizar estado de la orden
+
+		// ==============================================
+		// Endpoints de Productos
+		// ==============================================
+		r.Post("/products/add", products.Add)       // Agregar un nuevo producto
+		r.Delete("/products/{id}", products.Delete) // Eliminar un producto
+		r.Put("/products/{id}", products.Edit)      // Editar un producto existente
+
+		// ==============================================
+		// Endpoints de Roles
+		// ==============================================
+		r.Get("/roles", roles.Index)                // Listar todos los roles
+		r.Post("/roles/add", roles.Add)             // Crear un nuevo rol
+		r.Get("/roles/{id}", roles.GetByID)         // Obtener detalles de un rol específico
+		r.Put("/roles/{id}/apis", roles.UpdateApis) // Actualizar APIs asociadas a un rol
+
+		// ==============================================
+		// Endpoints de Usuarios
+		// ==============================================
+		r.Post("/users/add", users.Add)              // Registrar un nuevo usuario
+		r.Post("/users/edit", users.Edit)            // Editar información de usuario
+		r.Delete("/users/delete/{id}", users.Delete) // Eliminar un usuario (admin)
+		r.Get("/users", users.Index)                 // Listar todos los usuarios (admin)
+		r.Get("/users/{id}", users.GetByID)          // Obtener información de usuario específico
 
 	})
 	// Public routes
