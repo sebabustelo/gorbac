@@ -22,8 +22,8 @@ graph TD
     Ctrl[Controladores]
     Models[Modelos]
   end
-  DB[(MariaDB)]
-  Frontend[Frontend (React, etc.)]
+  DB[MariaDB]
+  Frontend[Frontend]
 
   Frontend -- HTTP/JSON --> API
   API -- ORM/SQL --> DB
